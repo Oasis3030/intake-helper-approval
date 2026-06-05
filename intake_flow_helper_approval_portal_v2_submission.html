@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Intake Flow Helper Approval Portal</title>
+  <style>
+    :root {
+      --bg: #f5f6f8;
+      --card: #ffffff;
+      --border: #d7dce2;
+      --text: #1f2933;
+      --muted: #64748b;
+      --primary: #1f4e79;
+      --approved: #2e7d32;
+      --pending: #b26a00;
+      --needs-revision: #b00020;
+      --bar-bg: #e5e7eb;
+      --shadow: 0 3px 10px rgba(0,0,0,.06);
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 24px 32px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 24px;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .container {
+      max-width: 1180px;
+      margin: 24px auto;
+      padding: 0 20px 40px;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin-bottom: 22px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .progress-row {
+      margin: 12px 0;
+    }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+
+    .bar {
+      height: 12px;
+      background: var(--bar-bg);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      background: var(--primary);
+      width: 0%;
+      transition: width .2s ease;
+    }
+
+    .practice-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+
+    .practice-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .practice-title {
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    details {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    summary {
+      cursor: pointer;
+      padding: 16px 18px;
+      font-weight: bold;
+      background: #fafafa;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-body {
+      padding: 16px 18px 20px;
+    }
+
+    .approval-item {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 14px;
+      background: #fff;
+    }
+
+    .item-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .item-title {
+      font-weight: bold;
+      font-size: 15px;
+    }
+
+    .status-badge {
+      font-size: 12px;
+      border-radius: 999px;
+      padding: 4px 9px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .status-approved {
+      color: var(--approved);
+      border-color: var(--approved);
+      background: #edf7ed;
+    }
+
+    .status-revision {
+      color: var(--needs-revision);
+      border-color: var(--needs-revision);
+      background: #fff1f2;
+    }
+
+    .script-box, .question-box {
+      border-left: 4px solid var(--primary);
+      background: #f8fafc;
+      padding: 10px 12px;
+      line-height: 1.5;
+      margin: 8px 0 10px;
+      white-space: pre-wrap;
+    }
+
+    .question-box {
+      border-left-color: #64748b;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 10px 0;
+    }
+
+    button {
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      border-radius: 6px;
+      padding: 8px 10px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    button:hover {
+      background: #f1f5f9;
+    }
+
+    button.approve {
+      border-color: var(--approved);
+      color: var(--approved);
+    }
+
+    button.revise {
+      border-color: var(--needs-revision);
+      color: var(--needs-revision);
+    }
+
+    textarea {
+      width: 100%;
+      box-sizing: border-box;
+      min-height: 70px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px;
+      font-family: Arial, sans-serif;
+      resize: vertical;
+      margin-top: 8px;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .placeholder {
+      background: #fbfbfb;
+    }
+
+    .submission-panel {
+      margin-top: 22px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .submission-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin: 12px 0;
+    }
+
+    .submission-grid input {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 9px 10px;
+      font-family: Arial, sans-serif;
+    }
+
+    .export-box {
+      width: 100%;
+      min-height: 160px;
+      box-sizing: border-box;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px;
+      font-family: Consolas, monospace;
+      font-size: 12px;
+      background: #f8fafc;
+      margin-top: 10px;
+      display: none;
+    }
+
+    @media print {
+      header, .practice-list, .button-row, .submission-actions, #exportText {
+        display: none !important;
+      }
+
+      body {
+        background: white;
+      }
+
+      .card, details, .approval-item, .submission-panel {
+        box-shadow: none;
+        border: 1px solid #999;
+      }
+
+      details {
+        break-inside: avoid;
+      }
+
+      details:not([open]) .section-body {
+        display: block;
+      }
+
+      summary {
+        border-bottom: 1px solid #999;
+      }
+    }
+
+    @media (max-width: 780px) {
+      .dashboard {
+        grid-template-columns: 1fr;
+      }
+
+      header {
+        position: static;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Intake Flow Helper Approval Portal</h1>
+    <p class="subtitle">Attorney review version. Approve, flag for revision, or add notes for each script and question set.</p>
+  </header>
+
+  <main class="container">
+    <section class="dashboard">
+      <div class="card">
+        <h2>Overall Progress</h2>
+        <div class="progress-row">
+          <div class="progress-label">
+            <span id="overallText">0 of 0 items approved</span>
+            <span id="overallPercent">0%</span>
+          </div>
+          <div class="bar"><div id="overallBar" class="bar-fill"></div></div>
+        </div>
+        <p class="muted">Progress updates when items are marked approved.</p>
+      </div>
+
+      <div class="card">
+        <h2>Review Legend</h2>
+        <p class="muted"><strong>Approve:</strong> Script/question can be used as written.</p>
+        <p class="muted"><strong>Needs Revision:</strong> Attorney wants edits before implementation.</p>
+        <p class="muted"><strong>Notes:</strong> Add comments, alternate language, or missing questions.</p>
+      </div>
+    </section>
+
+    <section class="practice-list" id="practiceProgress"></section>
+
+    <section id="approvalTree"></section>
+
+    <section class="submission-panel">
+      <h2>Submission / Revision Export</h2>
+      <p class="muted">After review, enter reviewer information and export the notes. The downloaded file can be emailed back to Ari for revisions.</p>
+
+      <div class="submission-grid">
+        <div>
+          <label class="muted">Reviewer Name</label>
+          <input id="reviewerName" type="text" placeholder="Example: Jon David Huffman" />
+        </div>
+        <div>
+          <label class="muted">Review Date</label>
+          <input id="reviewDate" type="date" />
+        </div>
+      </div>
+
+      <label class="muted">General Notes</label>
+      <textarea id="generalNotes" placeholder="Add any overall comments here..."></textarea>
+
+      <div class="button-row submission-actions">
+        <button onclick="generateReviewSummary()">Generate Review Summary</button>
+        <button onclick="downloadReviewJson()">Download Review JSON</button>
+        <button onclick="downloadReviewText()">Download Review Notes</button>
+        <button onclick="window.print()">Print / Save as PDF</button>
+      </div>
+
+      <textarea id="exportText" class="export-box" readonly></textarea>
+    </section>
+  </main>
+
+  <script>
+    const approvalData = [
+      {
+        area: "Universal Intake",
+        items: [
+          {
+            title: "Does your firm do...?",
+            type: "Script",
+            content: "I can help determine that. I’ll ask a few preliminary intake questions first, and if it appears to be within our scope, I can work on getting you scheduled for a consultation."
+          },
+          {
+            title: "What is a conflict check?",
+            type: "Script",
+            content: "A conflict check is just a quick search to make sure we don’t have any existing relationships or obligations that would prevent us from speaking with you about the matter. If everything comes back clear, we’ll continue with the intake process."
+          },
+          {
+            title: "Location Confirmation",
+            type: "Script",
+            content: "Before we get into the details, where are you located, and where do you understand the opposing party to be located?"
+          },
+          {
+            title: "Conflict Check",
+            type: "Script",
+            content: "Before we discuss further details, I need to clear any potential conflicts. What is the name of the individual or entity that you’re having the dispute with?"
+          },
+          {
+            title: "Conflict Clear",
+            type: "Script",
+            content: "Okay, looks like there aren’t any hits in my preliminary conflict search. I am permitted to say that after the consultation, right before we send a letter of engagement, we will perform a firm-wide conflict check. While it is very unlikely, due to the extensiveness of that search, there is a very small chance there could still be a conflict. If that were the case, we have a process in place that protects both you and us. But as of right now, we are good to move forward with intake."
+          },
+          {
+            title: "Contact Information Collection",
+            type: "Script",
+            content: "What is your first and last name?\n\nIs the number we’re on right now, ending in [last four], a good number for a specialist or the attorney to call, or should I list another one?\n\nWhat’s a good email address for you?"
+          }
+        ]
+      },
+      {
+        area: "Business / Commercial Dispute",
+        items: [
+          {
+            title: "Opening Practice Area Script",
+            type: "Script",
+            content: "Yes. Business and commercial disputes are one of our primary practice areas.\n\nI’ll start with a preliminary conflict check. Once we clear that, I’ll let you walk me through the dispute naturally."
+          },
+          {
+            title: "Client Explanation Phase",
+            type: "Script",
+            content: "Thank you so much for confirming. What kind of dispute are you having with [Opposing Party]?"
+          },
+          {
+            title: "Intake Specialist Instruction",
+            type: "Instruction",
+            content: "Allow the PNC to explain the situation naturally. Do not force questions in order. Listen for keywords and click the matching buttons as the PNC provides information. Follow-up questions should queue on the side and only be asked if not already answered."
+          }
+        ]
+      },
+      {
+        area: "Business / Commercial Keyword Triggers",
+        items: [
+          {
+            title: "Property",
+            type: "Follow-Up Questions",
+            content: "Ask if not already answered:\n- Is the property residential or commercial?\n- What is the property address?\n- What county is the property located in?\n- Who owns the property?\n- Is title disputed?\n- Is there a sale, lease, lien, or closing issue?"
+          },
+          {
+            title: "Business Partner",
+            type: "Follow-Up Questions",
+            content: "Ask if not already answered:\n- What percentage does each owner own?\n- Is there an operating agreement?\n- Is the business still operating?\n- Who controls the bank accounts?\n- Who controls the customers?\n- What outcome does the PNC want?"
+          },
+          {
+            title: "Operating Agreement",
+            type: "Follow-Up Questions",
+            content: "Ask if not already answered:\n- Is it signed?\n- Does the PNC have a copy?\n- What provision is being violated?\n- Does it contain a buyout process?"
+          },
+          {
+            title: "Contract",
+            type: "Follow-Up Questions",
+            content: "Ask if not already answered:\n- Is the contract signed?\n- Who signed it?\n- When was it signed?\n- What specific provision was breached?\n- What damages resulted?"
+          },
+          {
+            title: "Buyout",
+            type: "Follow-Up Questions",
+            content: "Ask if not already answered:\n- Who proposed the buyout?\n- Is there a written offer?\n- What amount was proposed?\n- Has a deadline been given?"
+          },
+          {
+            title: "Money Owed",
+            type: "Follow-Up Questions",
+            content: "Ask if not already answered:\n- How much is owed?\n- Who owes the money?\n- What is the basis of the debt?\n- Are there invoices, notes, or agreements?"
+          },
+          {
+            title: "Misappropriation",
+            type: "Follow-Up Questions",
+            content: "Ask if not already answered:\n- What funds were taken?\n- When did this occur?\n- Is there documentation?\n- Was the money company money or personal money?"
+          },
+          {
+            title: "Ownership Percentage",
+            type: "Follow-Up Questions",
+            content: "Ask if not already answered:\n- What is the ownership percentage?\n- How was ownership established?\n- Is ownership documented?"
+          },
+          {
+            title: "Access Revoked",
+            type: "Follow-Up Questions",
+            content: "Ask if not already answered:\n- What access was revoked?\n- Email?\n- Bank accounts?\n- Software?\n- Property?\n- Business records?"
+          },
+          {
+            title: "Demand Letter",
+            type: "Follow-Up Questions",
+            content: "Ask if not already answered:\n- Who sent it?\n- When was it sent?\n- Is an attorney involved?\n- Does a response deadline exist?"
+          },
+          {
+            title: "Lawsuit Filed",
+            type: "Follow-Up Questions",
+            content: "Ask if not already answered:\n- What county?\n- What is the case number?\n- When was the PNC served?\n- Are there upcoming deadlines?\n- Are there hearing dates?"
+          },
+          {
+            title: "Fraud",
+            type: "Follow-Up Questions",
+            content: "Ask if not already answered:\n- What representations were made?\n- Why does the PNC believe they were false?\n- What damages resulted?"
+          },
+          {
+            title: "Urgent Deadline",
+            type: "Follow-Up Questions",
+            content: "Ask if not already answered:\n- What is the deadline?\n- Who imposed it?\n- What happens if it is missed?"
+          }
+        ]
+      },
+      {
+        area: "Consultation Booking",
+        items: [
+          {
+            title: "Appointment Description Template",
+            type: "Template",
+            content: "This is a scheduled consultation to gather preliminary information about your matter and determine how and if our firm can assist you.\n\nIf anything changes and you need to reschedule your appointment, please contact the main line at (404) 373-4008.\n\n[Attorney Name] will call you at the scheduled time. Please allow a 10–15 minute window for any delays."
+          },
+          {
+            title: "Two-Attorney Version",
+            type: "Template",
+            content: "This is a scheduled consultation to gather preliminary information about your matter and determine how and if our firm can assist you.\n\nIf anything changes and you need to reschedule your appointment, please contact the main line at (404) 373-4008.\n\n[Attorney Name] and [Attorney Name] will call you at the scheduled time. Please allow a 10–15 minute window for any delays."
+          },
+          {
+            title: "Consulting Attorney Options",
+            type: "Options",
+            content: "Heather Brown\nJon David Huffman\nTodd Poole\nCal Harris\nMichael McGuffee\nShelby McKenzie\nJohn Stirvarius"
+          }
+        ]
+      },
+      {
+        area: "Quiet Title - Placeholder",
+        placeholder: true,
+        items: [
+          { title: "Opening Script", type: "Placeholder", content: "To be completed by attorney review." },
+          { title: "Keyword Triggers", type: "Placeholder", content: "To be completed by attorney review." },
+          { title: "Follow-Up Questions", type: "Placeholder", content: "To be completed by attorney review." }
+        ]
+      },
+      {
+        area: "Judgment Collection - Placeholder",
+        placeholder: true,
+        items: [
+          { title: "Opening Script", type: "Placeholder", content: "To be completed by attorney review." },
+          { title: "Required Documents", type: "Placeholder", content: "To be completed by attorney review." },
+          { title: "Follow-Up Questions", type: "Placeholder", content: "To be completed by attorney review." }
+        ]
+      },
+      {
+        area: "Defamation - Placeholder",
+        placeholder: true,
+        items: [
+          { title: "Opening Script", type: "Placeholder", content: "To be completed by attorney review." },
+          { title: "Keyword Triggers", type: "Placeholder", content: "To be completed by attorney review." },
+          { title: "Follow-Up Questions", type: "Placeholder", content: "To be completed by attorney review." }
+        ]
+      },
+      {
+        area: "Construction Defect - Placeholder",
+        placeholder: true,
+        items: [
+          { title: "Opening Script", type: "Placeholder", content: "To be completed by attorney review." },
+          { title: "Keyword Triggers", type: "Placeholder", content: "To be completed by attorney review." },
+          { title: "Follow-Up Questions", type: "Placeholder", content: "To be completed by attorney review." }
+        ]
+      }
+    ];
+
+    const state = {};
+    const notesState = {};
+
+    function render() {
+      const tree = document.getElementById("approvalTree");
+      tree.innerHTML = "";
+
+      approvalData.forEach((section, sectionIndex) => {
+        const details = document.createElement("details");
+        details.open = sectionIndex < 4;
+        if (section.placeholder) details.classList.add("placeholder");
+
+        const approvedCount = section.items.filter((_, itemIndex) => state[`${sectionIndex}-${itemIndex}`] === "approved").length;
+        const percent = section.items.length ? Math.round((approvedCount / section.items.length) * 100) : 0;
+
+        details.innerHTML = `
+          <summary>
+            ${section.area} — ${approvedCount} of ${section.items.length} approved (${percent}%)
+          </summary>
+          <div class="section-body">
+            <div class="progress-row">
+              <div class="progress-label"><span>Section Progress</span><span>${percent}%</span></div>
+              <div class="bar"><div class="bar-fill" style="width:${percent}%"></div></div>
+            </div>
+          </div>
+        `;
+
+        const body = details.querySelector(".section-body");
+
+        section.items.forEach((item, itemIndex) => {
+          const key = `${sectionIndex}-${itemIndex}`;
+          const status = state[key] || "pending";
+          const statusText = status === "approved" ? "Approved" : status === "revision" ? "Needs Revision" : "Pending";
+          const statusClass = status === "approved" ? "status-approved" : status === "revision" ? "status-revision" : "";
+
+          const div = document.createElement("div");
+          div.className = "approval-item";
+          div.innerHTML = `
+            <div class="item-header">
+              <div>
+                <div class="item-title">${item.title}</div>
+                <div class="muted">${item.type}</div>
+              </div>
+              <span class="status-badge ${statusClass}">${statusText}</span>
+            </div>
+
+            <div class="${item.type === "Follow-Up Questions" ? "question-box" : "script-box"}">${item.content}</div>
+
+            <div class="button-row">
+              <button class="approve" onclick="setStatus('${key}', 'approved')">Approve</button>
+              <button class="revise" onclick="setStatus('${key}', 'revision')">Needs Revision</button>
+              <button onclick="setStatus('${key}', 'pending')">Reset</button>
+            </div>
+
+            <label class="muted">Attorney Notes / Requested Revision</label>
+            <textarea oninput="setNote('${key}', this.value)" placeholder="Add notes, edits, missing questions, or alternate language here...">${notesState[key] || ""}</textarea>
+          `;
+          body.appendChild(div);
+        });
+
+        tree.appendChild(details);
+      });
+
+      renderProgress();
+    }
+
+    function setStatus(key, value) {
+      state[key] = value;
+      render();
+    }
+
+    function setNote(key, value) {
+      notesState[key] = value;
+    }
+
+    function collectReviewData() {
+      const reviewerName = document.getElementById("reviewerName").value || "";
+      const reviewDate = document.getElementById("reviewDate").value || "";
+      const generalNotes = document.getElementById("generalNotes").value || "";
+
+      const items = [];
+
+      approvalData.forEach((section, sectionIndex) => {
+        section.items.forEach((item, itemIndex) => {
+          const key = `${sectionIndex}-${itemIndex}`;
+          items.push({
+            section: section.area,
+            title: item.title,
+            type: item.type,
+            status: state[key] || "pending",
+            current_text: item.content,
+            attorney_notes: notesState[key] || ""
+          });
+        });
+      });
+
+      return {
+        document: "Intake Flow Helper Approval Portal",
+        version: "v1",
+        reviewer_name: reviewerName,
+        review_date: reviewDate,
+        general_notes: generalNotes,
+        exported_at: new Date().toISOString(),
+        items
+      };
+    }
+
+    function generateReviewSummary() {
+      const data = collectReviewData();
+      const approved = data.items.filter(item => item.status === "approved").length;
+      const revision = data.items.filter(item => item.status === "revision").length;
+      const pending = data.items.filter(item => item.status === "pending").length;
+
+      let output = "";
+      output += "INTAKE FLOW HELPER REVIEW SUMMARY\n";
+      output += "===================================\n\n";
+      output += `Reviewer: ${data.reviewer_name || "[Not provided]"}\n`;
+      output += `Review Date: ${data.review_date || "[Not provided]"}\n`;
+      output += `Exported At: ${data.exported_at}\n\n`;
+      output += `Approved: ${approved}\n`;
+      output += `Needs Revision: ${revision}\n`;
+      output += `Pending: ${pending}\n\n`;
+
+      if (data.general_notes) {
+        output += "GENERAL NOTES\n";
+        output += "-------------\n";
+        output += data.general_notes + "\n\n";
+      }
+
+      data.items.forEach(item => {
+        if (item.status === "revision" || item.attorney_notes.trim()) {
+          output += `${item.section} > ${item.title}\n`;
+          output += `Status: ${item.status}\n`;
+          output += `Type: ${item.type}\n`;
+          output += "Current Text / Questions:\n";
+          output += item.current_text + "\n";
+          output += "Attorney Notes / Requested Revision:\n";
+          output += (item.attorney_notes || "[No notes entered]") + "\n";
+          output += "\n-----------------------------------\n\n";
+        }
+      });
+
+      const box = document.getElementById("exportText");
+      box.style.display = "block";
+      box.value = output;
+      box.select();
+    }
+
+    function downloadFile(filename, content, type) {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function downloadReviewJson() {
+      const data = collectReviewData();
+      const reviewer = (data.reviewer_name || "reviewer").replace(/[^a-z0-9]/gi, "_").toLowerCase();
+      downloadFile(`intake_helper_review_${reviewer}.json`, JSON.stringify(data, null, 2), "application/json");
+    }
+
+    function downloadReviewText() {
+      generateReviewSummary();
+      const reviewer = (document.getElementById("reviewerName").value || "reviewer").replace(/[^a-z0-9]/gi, "_").toLowerCase();
+      downloadFile(`intake_helper_review_notes_${reviewer}.txt`, document.getElementById("exportText").value, "text/plain");
+    }
+
+    function renderProgress() {
+      const allItems = approvalData.flatMap((section, sectionIndex) =>
+        section.items.map((_, itemIndex) => `${sectionIndex}-${itemIndex}`)
+      );
+
+      const approved = allItems.filter(key => state[key] === "approved").length;
+      const total = allItems.length;
+      const percent = total ? Math.round((approved / total) * 100) : 0;
+
+      document.getElementById("overallText").textContent = `${approved} of ${total} items approved`;
+      document.getElementById("overallPercent").textContent = `${percent}%`;
+      document.getElementById("overallBar").style.width = `${percent}%`;
+
+      const practiceProgress = document.getElementById("practiceProgress");
+      practiceProgress.innerHTML = "";
+
+      approvalData.forEach((section, sectionIndex) => {
+        const approvedCount = section.items.filter((_, itemIndex) => state[`${sectionIndex}-${itemIndex}`] === "approved").length;
+        const sectionPercent = section.items.length ? Math.round((approvedCount / section.items.length) * 100) : 0;
+
+        const card = document.createElement("div");
+        card.className = "practice-card";
+        card.innerHTML = `
+          <div class="practice-title">${section.area}</div>
+          <div class="progress-row">
+            <div class="progress-label"><span>${approvedCount} of ${section.items.length}</span><span>${sectionPercent}%</span></div>
+            <div class="bar"><div class="bar-fill" style="width:${sectionPercent}%"></div></div>
+          </div>
+        `;
+        practiceProgress.appendChild(card);
+      });
+    }
+
+    render();
+  </script>
+</body>
+</html>
